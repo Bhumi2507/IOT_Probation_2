@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Bill Calculator</string>
+    <string name="sub_total">Sub Total : %s</string>
 </resources>
