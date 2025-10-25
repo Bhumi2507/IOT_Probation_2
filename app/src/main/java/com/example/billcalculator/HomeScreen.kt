@@ -1,12 +1,14 @@
+@file:Suppress("INFERRED_TYPE_VARIABLE_INTO_EMPTY_INTERSECTION_WARNING",
+    "TYPE_INTERSECTION_AS_REIFIED_WARNING"
+)
+
 package com.example.billcalculator
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -23,31 +25,26 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.billcalculator.model.BillCalculatorViewModel
+import com.example.billcalculator.model.AppViewModel
 import java.text.NumberFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    billViewModel : BillCalculatorViewModel = viewModel(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    appViewModel: AppViewModel = viewModel(),
 ) {
-
-    val billUiState by billViewModel.itemsList.collectAsState()
 
     var itemName by rememberSaveable { mutableStateOf("") }
     var itemPrice by rememberSaveable { mutableStateOf("") }
@@ -121,16 +118,18 @@ fun HomeScreen(
             )
 
             Button(
-                onClick = {
-                    calculatorViewModel.addItem()
-                }
+                onClick = { appViewModel.updateCurrentItem(itemName,itemPrice,itemQuantity)},
+                modifier = Modifier.padding(8.dp)
             ) {
                 Row {
                     Icon(
                         imageVector = Icons.Filled.Add,
                         contentDescription = null
                     )
-                    Text("Add New Item")
+                    Text(
+                        "Add New Item",
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
                 }
             }
 
@@ -222,14 +221,17 @@ fun PaidSwitch(
     modifier : Modifier = Modifier
 ){
     Row(
-        modifier = modifier
+        modifier = modifier.padding(8.dp),
+        horizontalArrangement = Arrangement.Center
     ){
-        Text("Paid")
+        Text(
+            "Paid",
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(12.dp)
+        )
         Switch(
             checked = switchCheck,
             onCheckedChange = onCheckChange,
-            modifier = Modifier.fillMaxWidth()
-                .wrapContentWidth(Alignment.End)
         )
     }
 }
