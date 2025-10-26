@@ -1,6 +1,3 @@
-@file:Suppress("INFERRED_TYPE_VARIABLE_INTO_EMPTY_INTERSECTION_WARNING",
-    "TYPE_INTERSECTION_AS_REIFIED_WARNING"
-)
 
 package com.example.billcalculator
 
@@ -25,10 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -46,21 +41,13 @@ fun HomeScreen(
     appViewModel: AppViewModel = viewModel(),
 ) {
 
-    var itemName by rememberSaveable { mutableStateOf("") }
-    var itemPrice by rememberSaveable { mutableStateOf("") }
-    var itemQuantity by rememberSaveable { mutableStateOf("") }
+    val calculatorUiState by appViewModel.uiState.collectAsState()
 
-    val price = itemPrice.toDoubleOrNull()?:0.0
-    val quantity = itemQuantity.toIntOrNull()?:1
-
-    var subTotal = 0.0
-    subTotal = calculateSubTotal(subTotal,price,quantity)
-
-    val totalAmount : String = totalBill(subTotal)
-
-    var showDialog by rememberSaveable { mutableStateOf(false) }
-
-    var paidSwitch by rememberSaveable { mutableStateOf(false) }
+    val subTotal = calculateSubTotal(
+        subtotal = calculatorUiState.subTotal ,
+        price = calculatorUiState.price,
+        quantity = calculatorUiState.quantity)
+    val totalAmount = totalBill(calculatorUiState.subTotal)
 
     Scaffold (
         topBar = {
@@ -79,8 +66,8 @@ fun HomeScreen(
                 .fillMaxSize()
         ) {
             EditTextField(
-                value = itemName,
-                onValueChange = { itemName = it },
+                value = appViewModel.itemName,
+                onValueChange = { appViewModel.onItemNameChange(it) },
                 label = "Item Name",
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Text,
@@ -90,8 +77,8 @@ fun HomeScreen(
             )
 
             EditTextField(
-                value = itemPrice,
-                onValueChange = { itemPrice = it },
+                value = appViewModel.itemPrice,
+                onValueChange = { appViewModel.onItemPriceChange(it) },
                 label = "Item Price",
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Number,
@@ -101,8 +88,8 @@ fun HomeScreen(
             )
 
             EditTextField(
-                value = itemQuantity,
-                onValueChange = { itemQuantity = it },
+                value = appViewModel.itemQuantity,
+                onValueChange = { appViewModel.onItemQuantityChange(it) },
                 label = "quantity",
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Number,
@@ -118,7 +105,14 @@ fun HomeScreen(
             )
 
             Button(
-                onClick = { appViewModel.updateCurrentItem(itemName,itemPrice,itemQuantity)},
+                onClick = {
+                    appViewModel.updateCurrentItem(
+                        appViewModel.itemName,
+                        appViewModel.itemPrice.toDoubleOrNull()?:0.0,
+                        appViewModel.itemQuantity.toIntOrNull()?:0,
+                        subtotal = subTotal,
+                    )
+                },
                 modifier = Modifier.padding(8.dp)
             ) {
                 Row {
@@ -134,7 +128,7 @@ fun HomeScreen(
             }
 
             ElevatedButton(
-                onClick = { showDialog = true },
+                onClick = { appViewModel.showBillDialog() },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -142,17 +136,16 @@ fun HomeScreen(
             ) {
                 Text("Generate Bill")
             }
-            if(showDialog){
+            if(calculatorUiState.showDialog){
                 DisplayTotal(R.string.total_bill,totalAmount)
             }
 
             PaidSwitch(
-                switchCheck = paidSwitch,
+                switchCheck = calculatorUiState.paidSwitchCheck,
                 onCheckChange = {
-                    
+                    appViewModel.paidSwitchUpdate()
                 }
             )
-
         }
     }
 }
@@ -188,7 +181,7 @@ fun EditTextField(
     )
 }
 
-@Composable
+
 private fun calculateSubTotal(
     subtotal: Double,
     price : Double,
@@ -200,7 +193,7 @@ private fun calculateSubTotal(
     return total
 }
 
-@Composable
+
 private fun totalBill(
     subtotal : Double,
     gst : Double = 5.0,
