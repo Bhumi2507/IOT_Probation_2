@@ -74,28 +74,10 @@ class AppViewModel : ViewModel() {
             }
     }
 
-    fun paidSwitchUpdate (){
-        if(_uiState.value.paidSwitchCheck){
-            _uiState.update{currentState->
-                currentState.copy(
-                    name = "",
-                    price = 0.0,
-                    quantity = 0,
-                    showDialog = false,
-                    paidSwitchCheck = false,
-                    subTotal = 0.0,
-                    totalAmount = 0.0,
-                )
-            }
-            clearInputFields()
-            clearCurrentList()
-        } else {
-            _uiState.update{currentState->
-                currentState.copy(
-                    paidSwitchCheck = true,
-                )
-            }
+    fun paidSwitchUpdate() {
+        _uiState.update { currentState ->
+            currentState.copy(paidSwitchCheck = !currentState.paidSwitchCheck)
         }
-
     }
+
 }

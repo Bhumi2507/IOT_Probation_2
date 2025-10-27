@@ -4,6 +4,7 @@ package com.example.billcalculator
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -73,7 +74,7 @@ fun HomeScreen(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next
                 ),
-                modifier = Modifier.padding(bottom = 32.dp)
+                modifier = Modifier.padding(bottom = 16.dp)
             )
 
             EditTextField(
@@ -84,7 +85,7 @@ fun HomeScreen(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                modifier = Modifier.padding(bottom = 32.dp)
+                modifier = Modifier.padding(bottom = 16.dp)
             )
 
             EditTextField(
@@ -101,7 +102,7 @@ fun HomeScreen(
             Text(
                 text = stringResource(R.string.sub_total, NumberFormat.getCurrencyInstance().format(subTotal)),
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(bottom = 32.dp)
+                modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Button(
@@ -156,10 +157,18 @@ fun DisplayTotal(
     textID : Int,
     total : String
 ){
-    Text(
-        text = stringResource(textID,total),
-        style = MaterialTheme.typography.displaySmall
-    )
+    Column (modifier = Modifier.padding(8.dp)){
+        Text(
+            text = stringResource(textID, total),
+            style = MaterialTheme.typography.displaySmall
+        )
+        Spacer(Modifier.padding(4.dp))
+        Text(
+            text = "Total bill is inclusive of 5% GST and 10% tip",
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+
 }
 
 @Composable
