@@ -11,7 +11,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,11 +43,7 @@ fun HomeScreen(
 
     val calculatorUiState by appViewModel.uiState.collectAsState()
 
-    val subTotal = calculateSubTotal(
-        subtotal = calculatorUiState.subTotal ,
-        price = calculatorUiState.price,
-        quantity = calculatorUiState.quantity)
-    val totalAmount = totalBill(calculatorUiState.subTotal)
+    val subTotal = calculatorUiState.subTotal
 
     Scaffold (
         topBar = {
@@ -109,13 +104,12 @@ fun HomeScreen(
                 onClick = {
                     appViewModel.updateCurrentItem(
                         appViewModel.itemName,
-                        appViewModel.itemPrice.toDoubleOrNull()?:0.0,
-                        appViewModel.itemQuantity.toIntOrNull()?:0,
-                        subtotal = subTotal,
+                        appViewModel.itemPrice.toDoubleOrNull() ?: 0.0,
+                        appViewModel.itemQuantity.toIntOrNull() ?: 0
                     )
-                },
-                modifier = Modifier.padding(8.dp)
-            ) {
+                }
+            )
+            {
                 Row {
                     Icon(
                         imageVector = Icons.Filled.Add,
@@ -129,16 +123,18 @@ fun HomeScreen(
             }
 
             ElevatedButton(
-                onClick = { appViewModel.showBillDialog() },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                onClick = {
+                    appViewModel.totalBill()
+                    appViewModel.showBillDialog()
+                }
             ) {
                 Text("Generate Bill")
             }
             if(calculatorUiState.showDialog){
-                DisplayTotal(R.string.total_bill,totalAmount)
+                DisplayTotal(
+                    R.string.total_bill,
+                    NumberFormat.getCurrencyInstance().format(calculatorUiState.totalAmount)
+                )
             }
 
             PaidSwitch(
@@ -190,32 +186,6 @@ fun EditTextField(
     )
 }
 
-
-private fun calculateSubTotal(
-    subtotal: Double,
-    price : Double,
-    quantity : Int,
-) : Double {
-    val totalPrice = price*quantity
-    val total = subtotal+totalPrice
-
-    return total
-}
-
-
-private fun totalBill(
-    subtotal : Double,
-    gst : Double = 5.0,
-    tip : Double = 10.0,
-) : String {
-    val gstAmount = (subtotal*gst)/100
-    val tipAmount = (subtotal*tip)/100
-
-    val totalBill = subtotal + gstAmount + tipAmount
-
-    return NumberFormat.getCurrencyInstance().format(totalBill)
-}
-
 @Composable
 fun PaidSwitch(
     switchCheck : Boolean,
@@ -237,3 +207,4 @@ fun PaidSwitch(
         )
     }
 }
+
