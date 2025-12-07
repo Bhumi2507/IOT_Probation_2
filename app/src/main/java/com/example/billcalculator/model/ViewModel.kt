@@ -11,75 +11,146 @@ import kotlinx.coroutines.flow.update
 
 class AppViewModel : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ItemsModel())
-    val uiState : StateFlow<ItemsModel> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(AppUiModel())
+    val uiState : StateFlow<AppUiModel> = _uiState.asStateFlow()
 
-    var itemName by mutableStateOf("")
-    var itemPrice by mutableStateOf("")
-    var itemQuantity by mutableStateOf("")
+    var itemsList by mutableStateOf(listOf(HistoryModel()))
+    var currentItemsList by mutableStateOf(listOf(ItemsModel()))
 
-    private lateinit var _currentItem : ItemsModel
-
-    private var _currentList = MutableStateFlow<List<ItemsModel>>(emptyList())
-    var currentList : StateFlow<List<ItemsModel>> = _currentList.asStateFlow()
-
-    fun updateCurrentItem(name: String, price: Double, quantity: Int) {
-        val subtotal = price * quantity
-
-        _currentItem = ItemsModel(name, price, quantity, subtotal)
-        _currentList.value = _currentList.value + _currentItem
-
-        // Update UI subtotal total (sum of all items)
-        val totalSubtotal = _currentList.value.sumOf { it.subTotal }
-        _uiState.update { it.copy(subTotal = totalSubtotal) }
-
-        clearInputFields()
-    }
-
-    fun onItemNameChange(newValue: String) {
-        itemName = newValue
-    }
-
-    fun onItemPriceChange(newValue: String) {
-        itemPrice = newValue
-    }
-
-    fun onItemQuantityChange(newValue: String) {
-        itemQuantity = newValue
-    }
-
-    private fun clearInputFields(){
-        itemName = ""
-        itemPrice = ""
-        itemQuantity = ""
-    }
-
-
-    fun clearCurrentList(){
-        _currentList.value=emptyList()
-    }
-
-    fun showBillDialog(){
-        _uiState.update { currentDialogState->
-            currentDialogState.copy(
-                showDialog = true,
+    fun onItemNameChange ( newItem : String){
+        _uiState.update { currentState->
+            currentState.copy(
+                itemName = newItem
             )
         }
     }
+
+    fun onItemPriceChange ( newPrice : String){
+        _uiState.update { currentState->
+            currentState.copy(
+                itemPrice = newPrice
+            )
+        }
+    }
+
+    fun onItemQuantityChange ( newQuantity : String){
+        _uiState.update { currentState->
+            currentState.copy(
+                itemQuantity = newQuantity
+            )
+        }
+    }
+
+    fun onAddNewItem() {
+        updateCurrentList()
+        subTotalCalculator()
+        _uiState.update { currentState->
+            currentState.copy(
+                itemName = "",
+                itemPrice = "",
+                itemQuantity = "",
+                subTotal = uiState.value.subTotal,
+            )
+        }
+    }
+
+    fun updateCurrentList(){
+        val newItem = ItemsModel(
+            itemName = uiState.value.itemName,
+            itemPrice = uiState.value.itemPrice,
+            itemQuantity = uiState.value.itemQuantity
+        )
+        currentItemsList = currentItemsList+newItem
+    }
+
+    fun generateBill() {
+        totalBill()
+        _uiState.update { currentState ->
+            currentState.copy(
+                showDialog = true,
+                totalAmount = uiState.value.totalAmount
+            )
+        }
+    }
+
 
     fun paidSwitchUpdate() {
         _uiState.update { currentState ->
             currentState.copy(paidSwitchCheck = !currentState.paidSwitchCheck)
         }
+        onPaidSwitchCheck()
+
+    }
+
+    private fun onPaidSwitchCheck(){
+        val newList = HistoryModel(
+            itemsList = currentItemsList,
+            subTotal = uiState.value.subTotal.toString(),
+            totalBill = uiState.value.totalAmount.toString()
+        )
+        if(uiState.value.paidSwitchCheck) {
+            itemsList = itemsList + newList
+        } else {
+            currentItemsList = emptyList()
+            _uiState.update { currentState ->
+                currentState.copy(
+                    itemName = "",
+                    itemPrice = "",
+                    itemQuantity = "",
+                    subTotal = 0.0,
+                    totalAmount = 0.0,
+                    showDialog = false,
+                    paidSwitchCheck = false,
+                )
+            }
+        }
+
+    }
+
+    fun subTotalCalculator() {
+        val price = _uiState.value.itemPrice.toDoubleOrNull() ?: 0.0
+        val quantity = _uiState.value.itemQuantity.toIntOrNull()?:0
+        val amount = price*quantity
+        val subAmount = _uiState.value.subTotal + amount
+        _uiState.update {
+            it.copy( subTotal = subAmount )
+        }
     }
 
     fun totalBill() {
         val subtotal = uiState.value.subTotal
+        val newItemPrice = uiState.value.itemPrice.toDoubleOrNull()?:0.0
+        val newItemQuantity = uiState.value.itemQuantity.toIntOrNull()?:1
+        val newItemTotal = newItemPrice*newItemQuantity
         val gst = subtotal * 0.05
         val tip = subtotal * 0.10
-        val total = subtotal + gst + tip
+        val total = subtotal + newItemTotal + gst + tip
 
         _uiState.update { it.copy(totalAmount = total) }
     }
+
+    fun reset(){
+        _uiState.update { currentState ->
+            currentState.copy(
+                itemName = "",
+                itemPrice = "",
+                itemQuantity = "",
+                subTotal = 0.0,
+                totalAmount = 0.0,
+                showDialog = false,
+                paidSwitchCheck = false,
+            )
+        }
+        currentItemsList = emptyList()
+    }
+
+    init{
+        reset()
+    }
+
 }
+
+
+
+
 

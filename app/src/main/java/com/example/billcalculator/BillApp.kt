@@ -13,15 +13,18 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.billcalculator.model.AppViewModel
 
 data class BottomNavItem (
     val route : String,
@@ -32,7 +35,11 @@ data class BottomNavItem (
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BillApp () {
+fun BillApp (
+    appViewModel : AppViewModel = viewModel()
+) {
+
+    val appUiState by appViewModel.uiState.collectAsState()
 
     val navController = rememberNavController()
 
@@ -62,10 +69,27 @@ fun BillApp () {
             modifier = Modifier.padding(innerPadding),
         ) {
             composable("home"){
-                HomeScreen( modifier = Modifier )
+                HomeScreen( modifier = Modifier,
+                    itemName = appUiState.itemName,
+                    onItemNameChange = appViewModel::onItemNameChange,
+                    itemPrice = appUiState.itemPrice,
+                    onItemPriceChange = appViewModel::onItemPriceChange,
+                    itemQuantity = appUiState.itemQuantity,
+                    onItemQuantityChange = appViewModel::onItemQuantityChange,
+                    onAddNewItemClicked = { appViewModel.onAddNewItem() },
+                    onGenerateBill = { appViewModel.generateBill() },
+                    showDialog = appUiState.showDialog,
+                    subTotal = appUiState.subTotal,
+                    totalAmount = appUiState.totalAmount,
+                    paidSwitchCheck = appUiState.paidSwitchCheck,
+                    onPaidSwitchChange = { appViewModel.paidSwitchUpdate()},
+                    )
             }
             composable("history") {
-                HistoryScreen( modifier =  Modifier )
+                HistoryScreen(
+                    modifier =  Modifier,
+                    historyList = appViewModel.itemsList
+                    )
             }
         }
     }

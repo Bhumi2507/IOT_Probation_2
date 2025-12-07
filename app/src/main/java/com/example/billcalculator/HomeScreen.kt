@@ -22,29 +22,32 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.billcalculator.model.AppViewModel
 import java.text.NumberFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    appViewModel: AppViewModel = viewModel(),
+    itemName: String,
+    onItemNameChange : (String) -> Unit,
+    itemPrice: String,
+    onItemPriceChange : (String) -> Unit,
+    itemQuantity : String,
+    onItemQuantityChange : (String) -> Unit,
+    onAddNewItemClicked : () -> Unit,
+    onGenerateBill : () -> Unit,
+    showDialog : Boolean,
+    subTotal : Double,
+    totalAmount : Double,
+    paidSwitchCheck : Boolean,
+    onPaidSwitchChange : (Boolean) -> Unit,
 ) {
-
-    val calculatorUiState by appViewModel.uiState.collectAsState()
-
-    val subTotal = calculatorUiState.subTotal
-
     Scaffold (
         topBar = {
             CenterAlignedTopAppBar(
@@ -62,8 +65,8 @@ fun HomeScreen(
                 .fillMaxSize()
         ) {
             EditTextField(
-                value = appViewModel.itemName,
-                onValueChange = { appViewModel.onItemNameChange(it) },
+                value = itemName,
+                onValueChange = { onItemNameChange(it) },
                 label = "Item Name",
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Text,
@@ -73,8 +76,8 @@ fun HomeScreen(
             )
 
             EditTextField(
-                value = appViewModel.itemPrice,
-                onValueChange = { appViewModel.onItemPriceChange(it) },
+                value = itemPrice,
+                onValueChange = { onItemPriceChange(it) },
                 label = "Item Price",
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Number,
@@ -84,8 +87,8 @@ fun HomeScreen(
             )
 
             EditTextField(
-                value = appViewModel.itemQuantity,
-                onValueChange = { appViewModel.onItemQuantityChange(it) },
+                value = itemQuantity,
+                onValueChange = { onItemQuantityChange(it) },
                 label = "quantity",
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Number,
@@ -102,11 +105,7 @@ fun HomeScreen(
 
             Button(
                 onClick = {
-                    appViewModel.updateCurrentItem(
-                        appViewModel.itemName,
-                        appViewModel.itemPrice.toDoubleOrNull() ?: 0.0,
-                        appViewModel.itemQuantity.toIntOrNull() ?: 0
-                    )
+                    onAddNewItemClicked()
                 }
             )
             {
@@ -124,23 +123,22 @@ fun HomeScreen(
 
             ElevatedButton(
                 onClick = {
-                    appViewModel.totalBill()
-                    appViewModel.showBillDialog()
+                    onGenerateBill()
                 }
             ) {
                 Text("Generate Bill")
             }
-            if(calculatorUiState.showDialog){
+            if(showDialog){
                 DisplayTotal(
                     R.string.total_bill,
-                    NumberFormat.getCurrencyInstance().format(calculatorUiState.totalAmount)
+                    NumberFormat.getCurrencyInstance().format(totalAmount)
                 )
             }
 
             PaidSwitch(
-                switchCheck = calculatorUiState.paidSwitchCheck,
+                switchCheck = paidSwitchCheck,
                 onCheckChange = {
-                    appViewModel.paidSwitchUpdate()
+                    onPaidSwitchChange(it)
                 }
             )
         }
