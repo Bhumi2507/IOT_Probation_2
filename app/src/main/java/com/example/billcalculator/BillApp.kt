@@ -25,6 +25,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.billcalculator.model.AppViewModel
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.Person
 
 data class BottomNavItem (
     val route : String,
@@ -39,7 +41,9 @@ fun BillApp (
     appViewModel : AppViewModel = viewModel()
 ) {
 
-    val appUiState by appViewModel.uiState.collectAsState()
+    val appHomeUiState by appViewModel.homeUiState.collectAsState()
+
+    val profileUi by appViewModel.profileUiState.collectAsState()
 
     val navController = rememberNavController()
 
@@ -56,6 +60,12 @@ fun BillApp (
             selectedIcon = Icons.Filled.DateRange,
             unselectedIcon = Icons.Outlined.DateRange
         ),
+        BottomNavItem(
+            route = "profile",
+            title = "Profile",
+            selectedIcon = Icons.Filled.Person,
+            unselectedIcon = Icons.Outlined.Person
+        )
     )
 
     Scaffold (
@@ -70,26 +80,33 @@ fun BillApp (
         ) {
             composable("home"){
                 HomeScreen( modifier = Modifier,
-                    itemName = appUiState.itemName,
+                    itemName = appHomeUiState.itemName,
                     onItemNameChange = appViewModel::onItemNameChange,
-                    itemPrice = appUiState.itemPrice,
+                    itemPrice = appHomeUiState.itemPrice,
                     onItemPriceChange = appViewModel::onItemPriceChange,
-                    itemQuantity = appUiState.itemQuantity,
+                    itemQuantity = appHomeUiState.itemQuantity,
                     onItemQuantityChange = appViewModel::onItemQuantityChange,
                     onAddNewItemClicked = { appViewModel.onAddNewItem() },
                     onGenerateBill = { appViewModel.generateBill() },
-                    showDialog = appUiState.showDialog,
-                    subTotal = appUiState.subTotal,
-                    totalAmount = appUiState.totalAmount,
-                    paidSwitchCheck = appUiState.paidSwitchCheck,
+                    showDialog = appHomeUiState.showDialog,
+                    subTotal = appHomeUiState.subTotal,
+                    totalAmount = appHomeUiState.totalAmount,
+                    paidSwitchCheck = appHomeUiState.paidSwitchCheck,
                     onPaidSwitchChange = { appViewModel.paidSwitchUpdate()},
                     )
             }
             composable("history") {
                 HistoryScreen(
-                    modifier =  Modifier,
-                    historyList = appViewModel.itemsList
-                    )
+                    modifier = Modifier,
+                    historyList = appViewModel.itemsList,
+                )
+            }
+            composable("profile") {
+                ProfileScreen(
+                    userName = profileUi.userName,
+                    userEmail= profileUi.userEmail,
+                    onEditButtonClicked = { appViewModel.onProfileEdit() }
+                )
             }
         }
     }

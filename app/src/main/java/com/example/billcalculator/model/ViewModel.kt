@@ -1,5 +1,6 @@
 package com.example.billcalculator.model
 
+import android.annotation.SuppressLint
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,14 +12,17 @@ import kotlinx.coroutines.flow.update
 
 class AppViewModel : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AppUiModel())
-    val uiState : StateFlow<AppUiModel> = _uiState.asStateFlow()
+    private val _homeUiState = MutableStateFlow(HomeUiModel())
+    val homeUiState : StateFlow<HomeUiModel> = _homeUiState.asStateFlow()
+
+    private val _profileUiState = MutableStateFlow(ProfileModel())
+    val profileUiState : StateFlow<ProfileModel> = _profileUiState.asStateFlow()
 
     var itemsList by mutableStateOf(listOf(HistoryModel()))
     var currentItemsList by mutableStateOf(listOf(ItemsModel()))
 
     fun onItemNameChange ( newItem : String){
-        _uiState.update { currentState->
+        _homeUiState.update { currentState->
             currentState.copy(
                 itemName = newItem
             )
@@ -26,7 +30,7 @@ class AppViewModel : ViewModel() {
     }
 
     fun onItemPriceChange ( newPrice : String){
-        _uiState.update { currentState->
+        _homeUiState.update { currentState->
             currentState.copy(
                 itemPrice = newPrice
             )
@@ -34,65 +38,72 @@ class AppViewModel : ViewModel() {
     }
 
     fun onItemQuantityChange ( newQuantity : String){
-        _uiState.update { currentState->
+        _homeUiState.update { currentState->
             currentState.copy(
                 itemQuantity = newQuantity
             )
         }
     }
 
+    @SuppressLint("SuspiciousIndentation")
     fun onAddNewItem() {
+        if (homeUiState.value.itemName.isNotEmpty()||homeUiState.value.itemPrice.isNotEmpty()||homeUiState.value.itemQuantity.isNotEmpty())
         updateCurrentList()
         subTotalCalculator()
-        _uiState.update { currentState->
+        _homeUiState.update { currentState->
             currentState.copy(
                 itemName = "",
                 itemPrice = "",
                 itemQuantity = "",
-                subTotal = uiState.value.subTotal,
+                subTotal = homeUiState.value.subTotal,
             )
         }
     }
 
     fun updateCurrentList(){
         val newItem = ItemsModel(
-            itemName = uiState.value.itemName,
-            itemPrice = uiState.value.itemPrice,
-            itemQuantity = uiState.value.itemQuantity
+            itemName = homeUiState.value.itemName,
+            itemPrice = homeUiState.value.itemPrice,
+            itemQuantity = homeUiState.value.itemQuantity
         )
         currentItemsList = currentItemsList+newItem
     }
 
     fun generateBill() {
         totalBill()
-        _uiState.update { currentState ->
+        _homeUiState.update { currentState ->
             currentState.copy(
                 showDialog = true,
-                totalAmount = uiState.value.totalAmount
+                totalAmount = homeUiState.value.totalAmount
             )
+        }
+        if (homeUiState.value.itemName.isNotEmpty() && homeUiState.value.itemPrice.isNotEmpty() && homeUiState.value.itemQuantity.isNotEmpty()) {
+            updateCurrentList()
         }
     }
 
 
     fun paidSwitchUpdate() {
-        _uiState.update { currentState ->
-            currentState.copy(paidSwitchCheck = !currentState.paidSwitchCheck)
+        if(homeUiState.value.showDialog) {
+            _homeUiState.update { currentState ->
+                currentState.copy(paidSwitchCheck = !currentState.paidSwitchCheck)
+            }
+            onPaidSwitchCheck()
         }
-        onPaidSwitchCheck()
 
     }
 
     private fun onPaidSwitchCheck(){
         val newList = HistoryModel(
             itemsList = currentItemsList,
-            subTotal = uiState.value.subTotal.toString(),
-            totalBill = uiState.value.totalAmount.toString()
+            subTotal = homeUiState.value.subTotal.toString(),
+            totalBill = homeUiState.value.totalAmount.toString()
         )
-        if(uiState.value.paidSwitchCheck) {
+        if(homeUiState.value.paidSwitchCheck) {
             itemsList = itemsList + newList
         } else {
             currentItemsList = emptyList()
-            _uiState.update { currentState ->
+            _homeUiState.update { currentState ->
                 currentState.copy(
                     itemName = "",
                     itemPrice = "",
@@ -108,29 +119,38 @@ class AppViewModel : ViewModel() {
     }
 
     fun subTotalCalculator() {
-        val price = _uiState.value.itemPrice.toDoubleOrNull() ?: 0.0
-        val quantity = _uiState.value.itemQuantity.toIntOrNull()?:0
+        val price = _homeUiState.value.itemPrice.toDoubleOrNull() ?: 0.0
+        val quantity = _homeUiState.value.itemQuantity.toIntOrNull()?:0
         val amount = price*quantity
-        val subAmount = _uiState.value.subTotal + amount
-        _uiState.update {
+        val subAmount = _homeUiState.value.subTotal + amount
+        _homeUiState.update {
             it.copy( subTotal = subAmount )
         }
     }
 
     fun totalBill() {
-        val subtotal = uiState.value.subTotal
-        val newItemPrice = uiState.value.itemPrice.toDoubleOrNull()?:0.0
-        val newItemQuantity = uiState.value.itemQuantity.toIntOrNull()?:1
+        val newItemPrice = homeUiState.value.itemPrice.toDoubleOrNull()?:0.0
+        val newItemQuantity = homeUiState.value.itemQuantity.toIntOrNull()?:1
         val newItemTotal = newItemPrice*newItemQuantity
+        val subtotal = homeUiState.value.subTotal + newItemTotal
         val gst = subtotal * 0.05
         val tip = subtotal * 0.10
-        val total = subtotal + newItemTotal + gst + tip
+        val total = subtotal + gst + tip
 
-        _uiState.update { it.copy(totalAmount = total) }
+        _homeUiState.update {
+            it.copy(
+                subTotal = subtotal,
+                totalAmount = total
+            )
+        }
+    }
+
+    fun onProfileEdit(){
+
     }
 
     fun reset(){
-        _uiState.update { currentState ->
+        _homeUiState.update { currentState ->
             currentState.copy(
                 itemName = "",
                 itemPrice = "",
